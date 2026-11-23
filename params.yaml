@@ -1,0 +1,41 @@
+# Configuration parameters for SMART Drive Failure MLOps Pipeline
+
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  reference_dir: "data/reference"
+  prediction_horizon_days: 7     # Predict failure 7 days in advance
+  rolling_window_days: 7        # Rolling aggregation window
+  top_models:                   # Filter for high-volume enterprise drive models
+    - "ST4000DM000"
+    - "ST12000NM0007"
+    - "TOSHIBA MG07ACA14TA"
+    - "WDC WUH721414ALE6L4"
+
+features:
+  smart_features:
+    - "smart_5_raw"     # Reallocated Sectors Count
+    - "smart_9_raw"     # Power-On Hours
+    - "smart_187_raw"   # Reported Uncorrectable Errors
+    - "smart_188_raw"   # Command Timeout
+    - "smart_194_raw"   # Temperature (°C)
+    - "smart_197_raw"   # Current Pending Sector Count
+    - "smart_198_raw"   # Offline Uncorrectable Sector Count
+
+training:
+  model_type: "lightgbm"
+  target_col: "failure_within_7d"
+  test_size_days: 15             # Temporal holdout window
+  val_size_days: 15
+  scale_pos_weight: 50.0         # Imbalance adjustment
+  random_state: 42
+  learning_rate: 0.05
+  n_estimators: 300
+  max_depth: 6
+  num_leaves: 31
+  subsample: 0.8
+  colsample_bytree: 0.8
+
+monitoring:
+  drift_threshold_ks: 0.05       # Kolmogorov-Smirnov p-value threshold
+  psi_threshold: 0.1             # Population Stability Index threshold

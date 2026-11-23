@@ -1,0 +1,28 @@
+stages:
+  generate_benchmark_data:
+    cmd: python3 -m src.data.generate_sample
+    deps:
+      - src/data/generate_sample.py
+    outs:
+      - data/raw/telemetry_sample.parquet:
+          cache: true
+
+  train:
+    cmd: python3 -m src.models.train
+    deps:
+      - data/raw/telemetry_sample.parquet
+      - src/data/features.py
+      - src/models/train.py
+      - params.yaml
+    params:
+      - data
+      - features
+      - training
+    outs:
+      - models/lgb_model.joblib:
+          cache: true
+      - data/reference/reference_features.parquet:
+          cache: true
+    metrics:
+      - models/metrics.json:
+          cache: false
