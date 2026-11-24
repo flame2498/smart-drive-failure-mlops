@@ -55,3 +55,4 @@ reports/
 .idea/
 .env
 .pytest_cache/
+.agents/
