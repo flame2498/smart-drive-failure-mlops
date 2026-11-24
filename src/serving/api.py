@@ -63,6 +63,29 @@ def health_check():
 def _score_drive(input_data: DriveTelemetryInput, model, feature_cols) -> PredictionResponse:
     data_dict = input_data.model_dump()
     row = {col: data_dict.get(col, 0.0) for col in feature_cols}
+
+    # Automatically compute derived domain features if omitted by client
+    if "wear_rate_per_hour" in feature_cols and row.get("wear_rate_per_hour", 0.0) == 0.0:
+        row["wear_rate_per_hour"] = data_dict.get("smart_5_raw", 0.0) / (data_dict.get("smart_9_raw", 0.0) + 1.0)
+    if "composite_critical_errors" in feature_cols and row.get("composite_critical_errors", 0.0) == 0.0:
+        row["composite_critical_errors"] = (
+            data_dict.get("smart_5_raw", 0.0)
+            + data_dict.get("smart_187_raw", 0.0)
+            + data_dict.get("smart_197_raw", 0.0)
+        )
+    if "wear_acceleration_rate" in feature_cols and row.get("wear_acceleration_rate", 0.0) == 0.0:
+        row["wear_acceleration_rate"] = data_dict.get("smart_5_raw_delta_7d", 0.0) / (data_dict.get("smart_9_raw", 0.0) + 1.0)
+    if "composite_delta_spike_7d" in feature_cols and row.get("composite_delta_spike_7d", 0.0) == 0.0:
+        row["composite_delta_spike_7d"] = (
+            data_dict.get("smart_5_raw_delta_7d", 0.0)
+            + data_dict.get("smart_187_raw_delta_7d", 0.0)
+            + data_dict.get("smart_197_raw_delta_7d", 0.0)
+        )
+    if "temperature_instability" in feature_cols and row.get("temperature_instability", 0.0) == 0.0:
+        row["temperature_instability"] = abs(
+            data_dict.get("smart_194_raw", 0.0) - data_dict.get("smart_194_raw_mean_7d", data_dict.get("smart_194_raw", 0.0))
+        )
+
     df_row = pd.DataFrame([row])
 
     prob = float(model.predict_proba(df_row)[0, 1])

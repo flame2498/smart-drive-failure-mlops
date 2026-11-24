@@ -38,6 +38,8 @@ def test_feature_engineering_deltas(sample_raw_telemetry):
         rolling_window_days=7,
     )
     assert "smart_5_raw_delta_7d" in feat_df.columns
+    assert "wear_rate_per_hour" in feat_df.columns
+    assert "composite_critical_errors" in feat_df.columns
     assert "failure_within_7d" in feat_df.columns
     assert len(feat_df) == 2
 

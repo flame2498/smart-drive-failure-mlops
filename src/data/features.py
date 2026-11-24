@@ -72,6 +72,25 @@ def compute_telemetry_features(
 
     processed = processed.with_columns(feature_exprs)
 
+    # 3b. Domain-specific degradation and interaction features
+    domain_exprs = [
+        # Sector wear rate per power-on hour (normalized by drive age)
+        (pl.col("smart_5_raw") / (pl.col("smart_9_raw") + 1.0)).fill_null(0.0).alias("wear_rate_per_hour"),
+        # Acceleration of sector reallocations per operating hour
+        (pl.col(f"smart_5_raw_delta_{rolling_window_days}d") / (pl.col("smart_9_raw") + 1.0)).fill_null(0.0).alias("wear_acceleration_rate"),
+        # Composite critical error count (sum of 3 cardinal Backblaze failure indicators: 5, 187, 197)
+        (pl.col("smart_5_raw") + pl.col("smart_187_raw") + pl.col("smart_197_raw")).fill_null(0.0).alias("composite_critical_errors"),
+        # Composite delta spike over the rolling window
+        (
+            pl.col(f"smart_5_raw_delta_{rolling_window_days}d")
+            + pl.col(f"smart_187_raw_delta_{rolling_window_days}d")
+            + pl.col(f"smart_197_raw_delta_{rolling_window_days}d")
+        ).fill_null(0.0).alias(f"composite_delta_spike_{rolling_window_days}d"),
+        # Temperature instability: divergence between current temperature and rolling mean
+        (pl.col("smart_194_raw") - pl.col(f"smart_194_raw_mean_{rolling_window_days}d")).abs().fill_null(0.0).alias("temperature_instability"),
+    ]
+    processed = processed.with_columns(domain_exprs)
+
     # 4. Construct forward target: Did drive fail within [t+1, t + horizon]?
     # A drive fails within horizon if max(failure) over the next N days is 1
     # We do a reverse rolling max over the horizon
