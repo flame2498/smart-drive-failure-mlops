@@ -28,8 +28,13 @@ def compute_telemetry_features(
     4. Computes forward target: failure within the next `prediction_horizon_days`.
     """
     # 1. Cast and fill missing SMART values with 0 (or previous observation)
+    date_expr = (
+        pl.col("date").str.to_date()
+        if df.schema["date"] == pl.String
+        else pl.col("date").cast(pl.Date)
+    )
     exprs = [
-        pl.col("date").cast(pl.Date),
+        date_expr,
         pl.col("serial_number").cast(pl.String),
         pl.col("model").cast(pl.String),
         pl.col("failure").cast(pl.Int32),

@@ -1,16 +1,20 @@
 stages:
-  generate_benchmark_data:
-    cmd: python3 -m src.data.generate_sample
+  ingest_backblaze_data:
+    cmd: python3 -m src.data.download_backblaze --quarter Q1 --year 2024
     deps:
-      - src/data/generate_sample.py
+      - src/data/download_backblaze.py
+      - src/data/validate.py
+      - params.yaml
+    params:
+      - data
     outs:
-      - data/raw/telemetry_sample.parquet:
+      - data/raw/backblaze_telemetry.parquet:
           cache: true
 
   train:
     cmd: python3 -m src.models.train
     deps:
-      - data/raw/telemetry_sample.parquet
+      - data/raw/backblaze_telemetry.parquet
       - src/data/features.py
       - src/models/train.py
       - params.yaml

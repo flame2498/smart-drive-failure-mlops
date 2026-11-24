@@ -18,11 +18,19 @@ def run_training_pipeline(config_path: str = "params.yaml") -> dict:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
-    raw_path = Path("data/raw/telemetry_sample.parquet")
+    raw_file = config["data"].get("raw_file", "data/raw/backblaze_telemetry.parquet")
+    raw_path = Path(raw_file)
     if not raw_path.exists():
-        from src.data.generate_sample import generate_benchmark_telemetry
-        print("Raw telemetry not found. Generating benchmark dataset...")
-        generate_benchmark_telemetry(output_path=str(raw_path))
+        fallback_path = Path("data/raw/telemetry_sample.parquet")
+        if fallback_path.exists():
+            raw_path = fallback_path
+        else:
+            from src.data.generate_sample import generate_benchmark_telemetry
+            print("Raw telemetry not found. Generating benchmark dataset...")
+            generate_benchmark_telemetry(output_path=str(fallback_path))
+            raw_path = fallback_path
+
+    print(f"Loading raw telemetry from {raw_path}...")
 
     # 1. Feature Engineering with Polars
     print("Computing rolling window features...")
