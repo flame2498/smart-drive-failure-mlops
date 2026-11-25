@@ -1,21 +1,30 @@
 """Model training pipeline with temporal out-of-time split and MLflow tracking."""
+
 import json
-import os
 from pathlib import Path
+
 import joblib
 import lightgbm as lgb
 import mlflow
 import mlflow.lightgbm
 import numpy as np
 import polars as pl
-from sklearn.metrics import average_precision_score, f1_score, fbeta_score, precision_score, recall_score, roc_auc_score
 import yaml
+from sklearn.metrics import (
+    average_precision_score,
+    f1_score,
+    fbeta_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 
 from src.data.features import compute_telemetry_features
 
 
 def tune_hyperparameters(X_train, y_train, X_val, y_val, n_trials: int = 15) -> dict:
     import optuna
+
     optuna.logging.set_verbosity(optuna.logging.WARNING)
 
     def objective(trial):
@@ -66,6 +75,7 @@ def run_training_pipeline(config_path: str = "params.yaml", tune: bool = False, 
             raw_path = fallback_path
         else:
             from src.data.generate_sample import generate_benchmark_telemetry
+
             print("Raw telemetry not found. Generating benchmark dataset...")
             generate_benchmark_telemetry(output_path=str(fallback_path))
             raw_path = fallback_path
@@ -84,7 +94,6 @@ def run_training_pipeline(config_path: str = "params.yaml", tune: bool = False, 
 
     # 2. Temporal Out-of-Time Train/Val/Test Split
     dates = df_feat.select("date").unique().sort("date")["date"].to_list()
-    total_days = len(dates)
     test_days = config["training"]["test_size_days"]
     val_days = config["training"]["val_size_days"]
 
@@ -97,8 +106,7 @@ def run_training_pipeline(config_path: str = "params.yaml", tune: bool = False, 
 
     target_col = config["training"]["target_col"]
     feature_cols = [
-        col for col in df_feat.columns
-        if col not in ["date", "serial_number", "model", "failure", target_col]
+        col for col in df_feat.columns if col not in ["date", "serial_number", "model", "failure", target_col]
     ]
 
     print(f"Features: {feature_cols}")
@@ -180,7 +188,7 @@ def run_training_pipeline(config_path: str = "params.yaml", tune: bool = False, 
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "lgb_model.joblib"
         joblib.dump({"model": clf, "feature_cols": feature_cols, "metrics": metrics}, model_path)
-        
+
         with open(model_dir / "metrics.json", "w") as f:
             json.dump(metrics, f, indent=2)
 
@@ -192,6 +200,7 @@ def run_training_pipeline(config_path: str = "params.yaml", tune: bool = False, 
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--tune", action="store_true", help="Run Optuna hyperparameter optimization")
     parser.add_argument("--trials", type=int, default=15, help="Number of Optuna trials")

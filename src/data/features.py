@@ -1,12 +1,12 @@
 """High-performance feature engineering using Polars on large telemetry time-series."""
-import polars as pl
-from pathlib import Path
+
 from typing import List, Optional
 
+import polars as pl
 
 SMART_COLS = [
-    "smart_5_raw",    # Reallocated Sectors Count
-    "smart_9_raw",    # Power-On Hours
+    "smart_5_raw",  # Reallocated Sectors Count
+    "smart_9_raw",  # Power-On Hours
     "smart_187_raw",  # Reported Uncorrectable Errors
     "smart_188_raw",  # Command Timeout
     "smart_194_raw",  # Temperature
@@ -28,11 +28,7 @@ def compute_telemetry_features(
     4. Computes forward target: failure within the next `prediction_horizon_days`.
     """
     # 1. Cast and fill missing SMART values with 0 (or previous observation)
-    date_expr = (
-        pl.col("date").str.to_date()
-        if df.schema["date"] == pl.String
-        else pl.col("date").cast(pl.Date)
-    )
+    date_expr = pl.col("date").str.to_date() if df.schema["date"] == pl.String else pl.col("date").cast(pl.Date)
     exprs = [
         date_expr,
         pl.col("serial_number").cast(pl.String),
@@ -77,17 +73,26 @@ def compute_telemetry_features(
         # Sector wear rate per power-on hour (normalized by drive age)
         (pl.col("smart_5_raw") / (pl.col("smart_9_raw") + 1.0)).fill_null(0.0).alias("wear_rate_per_hour"),
         # Acceleration of sector reallocations per operating hour
-        (pl.col(f"smart_5_raw_delta_{rolling_window_days}d") / (pl.col("smart_9_raw") + 1.0)).fill_null(0.0).alias("wear_acceleration_rate"),
+        (pl.col(f"smart_5_raw_delta_{rolling_window_days}d") / (pl.col("smart_9_raw") + 1.0))
+        .fill_null(0.0)
+        .alias("wear_acceleration_rate"),
         # Composite critical error count (sum of 3 cardinal Backblaze failure indicators: 5, 187, 197)
-        (pl.col("smart_5_raw") + pl.col("smart_187_raw") + pl.col("smart_197_raw")).fill_null(0.0).alias("composite_critical_errors"),
+        (pl.col("smart_5_raw") + pl.col("smart_187_raw") + pl.col("smart_197_raw"))
+        .fill_null(0.0)
+        .alias("composite_critical_errors"),
         # Composite delta spike over the rolling window
         (
             pl.col(f"smart_5_raw_delta_{rolling_window_days}d")
             + pl.col(f"smart_187_raw_delta_{rolling_window_days}d")
             + pl.col(f"smart_197_raw_delta_{rolling_window_days}d")
-        ).fill_null(0.0).alias(f"composite_delta_spike_{rolling_window_days}d"),
+        )
+        .fill_null(0.0)
+        .alias(f"composite_delta_spike_{rolling_window_days}d"),
         # Temperature instability: divergence between current temperature and rolling mean
-        (pl.col("smart_194_raw") - pl.col(f"smart_194_raw_mean_{rolling_window_days}d")).abs().fill_null(0.0).alias("temperature_instability"),
+        (pl.col("smart_194_raw") - pl.col(f"smart_194_raw_mean_{rolling_window_days}d"))
+        .abs()
+        .fill_null(0.0)
+        .alias("temperature_instability"),
     ]
     processed = processed.with_columns(domain_exprs)
 

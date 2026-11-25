@@ -5,15 +5,12 @@ optimized columnar Parquet files using memory-efficient Polars streaming.
 """
 
 import argparse
-from datetime import datetime
 import io
-import os
-from pathlib import Path
-import sys
 import time
-from typing import List, Optional
 import urllib.request
 import zipfile
+from pathlib import Path
+from typing import List, Optional
 
 import polars as pl
 import yaml
@@ -31,8 +28,8 @@ CORE_COLUMNS = [
 ]
 
 SMART_COLUMNS = [
-    "smart_5_raw",    # Reallocated Sectors Count
-    "smart_9_raw",    # Power-On Hours
+    "smart_5_raw",  # Reallocated Sectors Count
+    "smart_9_raw",  # Power-On Hours
     "smart_187_raw",  # Reported Uncorrectable Errors
     "smart_188_raw",  # Command Timeout
     "smart_194_raw",  # Temperature (Celsius)
@@ -54,7 +51,9 @@ def download_quarterly_archive(
     url = f"{BASE_URL}/{archive_name}"
 
     if archive_path.exists() and archive_path.stat().st_size > 10_000_000:
-        print(f"Archive {archive_name} already exists ({archive_path.stat().st_size / (1024 * 1024):.1f} MB). Skipping download.")
+        print(
+            f"Archive {archive_name} already exists ({archive_path.stat().st_size / (1024 * 1024):.1f} MB). Skipping download."
+        )
         return archive_path
 
     print(f"Downloading {url} to {archive_path}...")
@@ -94,10 +93,9 @@ def process_backblaze_archive(
 
     with zipfile.ZipFile(archive_path, "r") as zf:
         # Find all daily CSV files (ignore macOS __MACOSX metadata)
-        csv_names = sorted([
-            name for name in zf.namelist()
-            if name.endswith(".csv") and not name.startswith("__MACOSX")
-        ])
+        csv_names = sorted(
+            [name for name in zf.namelist() if name.endswith(".csv") and not name.startswith("__MACOSX")]
+        )
 
         if max_days:
             csv_names = csv_names[:max_days]
@@ -133,9 +131,7 @@ def process_backblaze_archive(
                     continue
 
                 date_expr = (
-                    pl.col("date").str.to_date()
-                    if df_day.schema["date"] == pl.String
-                    else pl.col("date").cast(pl.Date)
+                    pl.col("date").str.to_date() if df_day.schema["date"] == pl.String else pl.col("date").cast(pl.Date)
                 )
 
                 # Ensure schema consistency
@@ -153,10 +149,7 @@ def process_backblaze_archive(
                         # Clean temperature if composite sensor raw format
                         if smart_col == "smart_194_raw":
                             col_expr = (
-                                pl.when(col_expr > 100.0)
-                                .then(col_expr % 100.0)
-                                .otherwise(col_expr)
-                                .clip(0.0, 100.0)
+                                pl.when(col_expr > 100.0).then(col_expr % 100.0).otherwise(col_expr).clip(0.0, 100.0)
                             )
                         schema_exprs.append(col_expr)
                     else:
@@ -193,7 +186,9 @@ def process_backblaze_archive(
 
     file_size_mb = out_path.stat().st_size / (1024 * 1024)
     print(f"\nFinal Parquet saved to: {out_path} ({file_size_mb:.2f} MB)")
-    print(f"Summary: {len(combined_df):,} total rows, {combined_df['serial_number'].n_unique():,} unique drives, {total_failures} failure events.")
+    print(
+        f"Summary: {len(combined_df):,} total rows, {combined_df['serial_number'].n_unique():,} unique drives, {total_failures} failure events."
+    )
     return combined_df
 
 
@@ -202,7 +197,9 @@ def main():
     parser.add_argument("--quarter", type=str, default="Q1", help="Quarter (e.g. Q1, Q2, Q3, Q4)")
     parser.add_argument("--year", type=int, default=2024, help="Year (e.g. 2024, 2023)")
     parser.add_argument("--sample-days", type=int, default=None, help="Process only first N days for testing")
-    parser.add_argument("--output", type=str, default="data/raw/backblaze_telemetry.parquet", help="Output Parquet path")
+    parser.add_argument(
+        "--output", type=str, default="data/raw/backblaze_telemetry.parquet", help="Output Parquet path"
+    )
     parser.add_argument("--config", type=str, default="params.yaml", help="Path to params.yaml")
 
     args = parser.parse_args()

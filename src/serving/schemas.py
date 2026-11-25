@@ -1,6 +1,8 @@
 """Pydantic schemas for request validation in FastAPI serving."""
-from pydantic import BaseModel, Field
+
 from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class DriveTelemetryInput(BaseModel):

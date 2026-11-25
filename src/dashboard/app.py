@@ -4,10 +4,10 @@ Interactive Streamlit dashboard visualizing enterprise drive fleet health,
 real-time 7-day failure risk predictions, and MLOps sensor drift observability.
 """
 
-from pathlib import Path
 import json
+from pathlib import Path
+
 import joblib
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -51,7 +51,7 @@ def load_fleet_data():
     parquet_path = Path("data/raw/backblaze_telemetry.parquet")
     if not parquet_path.exists():
         parquet_path = Path("data/raw/telemetry_sample.parquet")
-    
+
     # Read metadata using Polars
     df = pl.read_parquet(parquet_path)
     return df
@@ -60,12 +60,7 @@ def load_fleet_data():
 @st.cache_data
 def get_sample_drives(_df: pl.DataFrame):
     # Get drives that experienced failure
-    failing_drives = (
-        _df.filter(pl.col("failure") == 1)
-        .select("serial_number")
-        .unique()["serial_number"]
-        .to_list()[:20]
-    )
+    failing_drives = _df.filter(pl.col("failure") == 1).select("serial_number").unique()["serial_number"].to_list()[:20]
     # Get random healthy drives
     healthy_drives = (
         _df.filter(pl.col("failure") == 0)
@@ -92,10 +87,10 @@ st.sidebar.title("SRE Cloud Console")
 st.sidebar.markdown("**Predictive Maintenance Platform**")
 st.sidebar.markdown("---")
 
-st.sidebar.markdown(f"**Model Type:** LightGBM")
+st.sidebar.markdown("**Model Type:** LightGBM")
 st.sidebar.markdown(f"**Features:** {len(feature_cols)} Domain Sensors")
-st.sidebar.markdown(f"**SLA Horizon:** 7 Days Ahead")
-st.sidebar.markdown(f"**Dataset:** Backblaze Q1 2024")
+st.sidebar.markdown("**SLA Horizon:** 7 Days Ahead")
+st.sidebar.markdown("**Dataset:** Backblaze Q1 2024")
 st.sidebar.markdown("---")
 
 # Header Title
@@ -114,12 +109,14 @@ with col4:
     st.metric("Failure SLA Window", "7 Days")
 
 # Tabs
-tab1, tab2, tab3, tab4 = st.tabs([
-    "📊 Fleet Health Overview",
-    "🔍 Drive Telemetry Inspector",
-    "🧪 What-If Risk Simulator",
-    "🛡️ MLOps Drift Observability",
-])
+tab1, tab2, tab3, tab4 = st.tabs(
+    [
+        "📊 Fleet Health Overview",
+        "🔍 Drive Telemetry Inspector",
+        "🧪 What-If Risk Simulator",
+        "🛡️ MLOps Drift Observability",
+    ]
+)
 
 # ----------------- TAB 1: FLEET HEALTH OVERVIEW -----------------
 with tab1:
@@ -128,12 +125,7 @@ with tab1:
 
     with col_left:
         # Drive models breakdown
-        model_counts = (
-            df_raw.select("model")
-            .to_pandas()["model"]
-            .value_counts()
-            .reset_index()
-        )
+        model_counts = df_raw.select("model").to_pandas()["model"].value_counts().reset_index()
         model_counts.columns = ["Model", "Count"]
         fig_models = px.pie(
             model_counts,
@@ -175,10 +167,12 @@ with tab1:
 # ----------------- TAB 2: DRIVE INSPECTOR -----------------
 with tab2:
     st.subheader("Individual Drive Telemetry & Risk Inspector")
-    
+
     col_sel1, col_sel2 = st.columns([2, 1])
     with col_sel1:
-        drive_options = ["--- Degraded / Failing Sample Drives ---"] + failing_drives + ["--- Healthy Drives ---"] + healthy_drives
+        drive_options = (
+            ["--- Degraded / Failing Sample Drives ---"] + failing_drives + ["--- Healthy Drives ---"] + healthy_drives
+        )
         selected_drive = st.selectbox("Select Drive Serial Number:", drive_options, index=1)
         if selected_drive.startswith("---"):
             selected_drive = failing_drives[0] if failing_drives else "DRIVE-001"
@@ -189,11 +183,7 @@ with tab2:
             selected_drive = custom_serial.strip()
 
     # Query telemetry for selected drive
-    drive_history = (
-        df_raw.filter(pl.col("serial_number") == selected_drive)
-        .sort("date")
-        .to_pandas()
-    )
+    drive_history = df_raw.filter(pl.col("serial_number") == selected_drive).sort("date").to_pandas()
 
     if drive_history.empty:
         st.warning(f"No telemetry found for drive serial {selected_drive}.")
@@ -229,7 +219,9 @@ with tab2:
             "smart_197_raw_mean_7d": float(drive_history["smart_197_raw"].tail(7).mean()),
             "smart_197_raw_delta_7d": s197_delta,
             "smart_194_raw_mean_7d": s194_mean,
-            "smart_194_raw_delta_7d": float(smart_194 - drive_history["smart_194_raw"].iloc[max(0, len(drive_history) - 8)]),
+            "smart_194_raw_delta_7d": float(
+                smart_194 - drive_history["smart_194_raw"].iloc[max(0, len(drive_history) - 8)]
+            ),
             "wear_rate_per_hour": smart_5 / (smart_9 + 1.0),
             "wear_acceleration_rate": s5_delta / (smart_9 + 1.0),
             "composite_critical_errors": smart_5 + smart_187 + smart_197,
@@ -244,20 +236,22 @@ with tab2:
         # Risk badge
         col_res1, col_res2 = st.columns([1, 2])
         with col_res1:
-            fig_gauge = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=prob * 100,
-                title={"text": "7-Day Failure Risk Score (%)"},
-                gauge={
-                    "axis": {"range": [0, 100]},
-                    "bar": {"color": "#ef4444" if prob >= 0.75 else ("#f59e0b" if prob >= 0.40 else "#10b981")},
-                    "steps": [
-                        {"range": [0, 40], "color": "#064e3b"},
-                        {"range": [40, 75], "color": "#78350f"},
-                        {"range": [75, 100], "color": "#7f1d1d"},
-                    ],
-                },
-            ))
+            fig_gauge = go.Figure(
+                go.Indicator(
+                    mode="gauge+number",
+                    value=prob * 100,
+                    title={"text": "7-Day Failure Risk Score (%)"},
+                    gauge={
+                        "axis": {"range": [0, 100]},
+                        "bar": {"color": "#ef4444" if prob >= 0.75 else ("#f59e0b" if prob >= 0.40 else "#10b981")},
+                        "steps": [
+                            {"range": [0, 40], "color": "#064e3b"},
+                            {"range": [40, 75], "color": "#78350f"},
+                            {"range": [75, 100], "color": "#7f1d1d"},
+                        ],
+                    },
+                )
+            )
             fig_gauge.update_layout(template="plotly_dark", height=240, margin=dict(l=20, r=20, t=40, b=20))
             st.plotly_chart(fig_gauge, use_container_width=True)
 
@@ -265,31 +259,54 @@ with tab2:
             st.markdown("#### Automated SRE Triage Recommendation")
             if prob >= 0.75:
                 st.markdown(
-                    f"<div class='risk-critical'>🚨 CRITICAL RISK ({prob*100:.1f}%)<br/>"
+                    f"<div class='risk-critical'>🚨 CRITICAL RISK ({prob * 100:.1f}%)<br/>"
                     "Action: Evacuate drive data immediately and schedule physical swap within 48h.</div>",
                     unsafe_allow_html=True,
                 )
             elif prob >= 0.40:
                 st.markdown(
-                    f"<div class='risk-warning'>⚠️ WARNING RISK ({prob*100:.1f}%)<br/>"
+                    f"<div class='risk-warning'>⚠️ WARNING RISK ({prob * 100:.1f}%)<br/>"
                     "Action: Increase telemetry polling frequency and initiate pre-emptive RAID group rebalancing.</div>",
                     unsafe_allow_html=True,
                 )
             else:
                 st.markdown(
-                    f"<div class='risk-healthy'>✅ HEALTHY ({prob*100:.1f}%)<br/>"
+                    f"<div class='risk-healthy'>✅ HEALTHY ({prob * 100:.1f}%)<br/>"
                     "Action: Drive operates within normal thresholds. No intervention needed.</div>",
                     unsafe_allow_html=True,
                 )
 
-            st.markdown(f"**Latest Telemetry:** Power-On Hours: `{smart_9:,.0f}h` | Reallocated Sectors: `{smart_5:.0f}` | Uncorrectable Errors: `{smart_187:.0f}` | Temperature: `{smart_194:.1f}°C`")
+            st.markdown(
+                f"**Latest Telemetry:** Power-On Hours: `{smart_9:,.0f}h` | Reallocated Sectors: `{smart_5:.0f}` | Uncorrectable Errors: `{smart_187:.0f}` | Temperature: `{smart_194:.1f}°C`"
+            )
 
         # Time series degradation curves
         st.markdown("#### Historical Telemetry Sensor Trajectory")
         fig_traj = go.Figure()
-        fig_traj.add_trace(go.Scatter(x=drive_history["date"], y=drive_history["smart_5_raw"], name="Reallocated Sectors (SMART 5)", line=dict(color="#f43f5e", width=2)))
-        fig_traj.add_trace(go.Scatter(x=drive_history["date"], y=drive_history["smart_187_raw"], name="Uncorrectable Errors (SMART 187)", line=dict(color="#a855f7", width=2)))
-        fig_traj.add_trace(go.Scatter(x=drive_history["date"], y=drive_history["smart_194_raw"], name="Temperature °C (SMART 194)", line=dict(color="#06b6d4", width=2, dash="dot")))
+        fig_traj.add_trace(
+            go.Scatter(
+                x=drive_history["date"],
+                y=drive_history["smart_5_raw"],
+                name="Reallocated Sectors (SMART 5)",
+                line=dict(color="#f43f5e", width=2),
+            )
+        )
+        fig_traj.add_trace(
+            go.Scatter(
+                x=drive_history["date"],
+                y=drive_history["smart_187_raw"],
+                name="Uncorrectable Errors (SMART 187)",
+                line=dict(color="#a855f7", width=2),
+            )
+        )
+        fig_traj.add_trace(
+            go.Scatter(
+                x=drive_history["date"],
+                y=drive_history["smart_194_raw"],
+                name="Temperature °C (SMART 194)",
+                line=dict(color="#06b6d4", width=2, dash="dot"),
+            )
+        )
         fig_traj.update_layout(template="plotly_dark", height=320, xaxis_title="Date", yaxis_title="Sensor Value")
         st.plotly_chart(fig_traj, use_container_width=True)
 
@@ -343,7 +360,7 @@ with tab3:
     st.markdown("---")
     res_col1, res_col2 = st.columns([1, 2])
     with res_col1:
-        st.metric("Simulated Failure Risk", f"{sim_prob*100:.2f}%")
+        st.metric("Simulated Failure Risk", f"{sim_prob * 100:.2f}%")
     with res_col2:
         if sim_prob >= 0.75:
             st.error("🚨 CRITICAL: Severe failure probability within 7 days. Evacuate data immediately.")
@@ -356,7 +373,9 @@ with tab3:
 # ----------------- TAB 4: MLOPS DRIFT OBSERVABILITY -----------------
 with tab4:
     st.subheader("🛡️ Telemetry Sensor Drift & Distribution Observability")
-    st.markdown("Statistical drift monitoring using **Kolmogorov-Smirnov 2-Sample Tests** and **Population Stability Index (PSI)** against training baseline:")
+    st.markdown(
+        "Statistical drift monitoring using **Kolmogorov-Smirnov 2-Sample Tests** and **Population Stability Index (PSI)** against training baseline:"
+    )
 
     drift_json_path = Path("reports/drift_metrics.json")
     if drift_json_path.exists():
@@ -375,13 +394,15 @@ with tab4:
         # Table of sensor drift metrics
         drift_rows = []
         for col_name, col_stats in drift_data.get("metrics_by_column", {}).items():
-            drift_rows.append({
-                "Sensor Feature": col_name,
-                "KS Statistic": col_stats["ks_statistic"],
-                "KS p-value": col_stats["ks_pvalue"],
-                "PSI Score": col_stats["psi"],
-                "Status": "DRIFT" if col_stats["drift_detected"] else "STABLE",
-            })
+            drift_rows.append(
+                {
+                    "Sensor Feature": col_name,
+                    "KS Statistic": col_stats["ks_statistic"],
+                    "KS p-value": col_stats["ks_pvalue"],
+                    "PSI Score": col_stats["psi"],
+                    "Status": "DRIFT" if col_stats["drift_detected"] else "STABLE",
+                }
+            )
         st.dataframe(pd.DataFrame(drift_rows), use_container_width=True)
     else:
         st.info("No drift report found. Run `python -m src.monitoring.drift` to generate report.")

@@ -1,10 +1,12 @@
 """Telemetry sensor drift detection using statistical KS-test and PSI monitoring."""
-from pathlib import Path
+
 import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from scipy import stats
 import yaml
+from scipy import stats
 
 
 def calculate_psi(reference: np.ndarray, current: np.ndarray, num_bins: int = 10) -> float:
@@ -98,7 +100,6 @@ def detect_sensor_drift(
         }
         metrics["metrics_by_column"][col] = col_metric
 
-        badge_class = "danger" if is_drifted else "success"
         badge_text = "DRIFT" if is_drifted else "STABLE"
         html_rows.append(
             f"<tr><td>{col}</td><td>{ks_stat:.4f}</td><td>{ks_pvalue:.4e}</td><td>{psi_val:.4f}</td>"
@@ -129,7 +130,7 @@ def detect_sensor_drift(
 <body>
     <h1>SMART Telemetry Drift Analysis</h1>
     <div class="summary">
-        Overall Status: <strong>{"DRIFT DETECTED" if metrics["drift_detected"] else "ALL SENSORS STABLE"}</strong> | 
+        Overall Status: <strong>{"DRIFT DETECTED" if metrics["drift_detected"] else "ALL SENSORS STABLE"}</strong> |
         Drifted Features: {len(metrics["columns_drifted"])} / {len(common_cols)}
     </div>
     <table>

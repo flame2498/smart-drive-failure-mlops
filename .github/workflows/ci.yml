@@ -27,6 +27,11 @@ jobs:
         run: |
           ruff check src/ tests/
 
+      - name: Generate Baseline Benchmark & Train Artifacts
+        run: |
+          python -m src.data.generate_sample
+          python -m src.models.train
+
       - name: Run Test Suite & Latency Assertions
         run: |
           pytest tests/ -v

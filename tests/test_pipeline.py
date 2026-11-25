@@ -1,5 +1,7 @@
 """Unit and integration tests for data, feature engineering, and serving API."""
+
 import datetime
+
 import polars as pl
 import pytest
 from fastapi.testclient import TestClient
@@ -11,19 +13,21 @@ from src.serving.api import app
 
 @pytest.fixture
 def sample_raw_telemetry():
-    return pl.DataFrame({
-        "date": [datetime.date(2024, 1, 1), datetime.date(2024, 1, 2)],
-        "serial_number": ["DRIVE-001", "DRIVE-001"],
-        "model": ["ST12000NM0007", "ST12000NM0007"],
-        "capacity_bytes": [12000000000000, 12000000000000],
-        "failure": [0, 0],
-        "smart_5_raw": [0.0, 1.0],
-        "smart_9_raw": [1000.0, 1024.0],
-        "smart_187_raw": [0.0, 0.0],
-        "smart_188_raw": [0.0, 0.0],
-        "smart_194_raw": [30.0, 31.0],
-        "smart_197_raw": [0.0, 0.0],
-    })
+    return pl.DataFrame(
+        {
+            "date": [datetime.date(2024, 1, 1), datetime.date(2024, 1, 2)],
+            "serial_number": ["DRIVE-001", "DRIVE-001"],
+            "model": ["ST12000NM0007", "ST12000NM0007"],
+            "capacity_bytes": [12000000000000, 12000000000000],
+            "failure": [0, 0],
+            "smart_5_raw": [0.0, 1.0],
+            "smart_9_raw": [1000.0, 1024.0],
+            "smart_187_raw": [0.0, 0.0],
+            "smart_188_raw": [0.0, 0.0],
+            "smart_194_raw": [30.0, 31.0],
+            "smart_197_raw": [0.0, 0.0],
+        }
+    )
 
 
 def test_data_validation(sample_raw_telemetry):
@@ -82,8 +86,8 @@ def test_api_predict_single_endpoint():
 
 def test_drift_detection():
     from src.monitoring.drift import detect_sensor_drift
+
     res = detect_sensor_drift("data/reference/reference_features.parquet")
     assert "drift_detected" in res
     assert res["drift_detected"] is False
     assert res["number_of_columns"] > 0
-

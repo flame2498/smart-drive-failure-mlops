@@ -1,8 +1,10 @@
 """Synthetic Backblaze-format data generator and telemetry downloader."""
+
 import datetime
+from pathlib import Path
+
 import numpy as np
 import polars as pl
-from pathlib import Path
 
 
 def generate_benchmark_telemetry(
@@ -21,7 +23,7 @@ def generate_benchmark_telemetry(
     models = ["ST4000DM000", "ST12000NM0007", "TOSHIBA MG07ACA14TA", "WDC WUH721414ALE6L4"]
 
     records = []
-    
+
     # Pre-select which drives will fail and when
     failing_drives = set(np.random.choice(range(num_drives), size=int(num_drives * failure_rate), replace=False))
     failure_days = {d: np.random.randint(20, days) for d in failing_drives}
@@ -32,7 +34,7 @@ def generate_benchmark_telemetry(
         capacity = 12000000000000
         base_hours = np.random.randint(1000, 40000)
         base_temp = np.random.normal(32.0, 3.0)
-        
+
         will_fail = drive_id in failing_drives
         fail_day = failure_days.get(drive_id, 999)
 
@@ -58,22 +60,24 @@ def generate_benchmark_telemetry(
                     s5 += np.random.poisson(0.1)
                 temp = base_temp + np.random.normal(0.0, 1.5)
 
-            records.append({
-                "date": current_date,
-                "serial_number": serial,
-                "model": model,
-                "capacity_bytes": capacity,
-                "failure": is_failure_day,
-                "smart_5_raw": float(s5),
-                "smart_9_raw": float(base_hours + day * 24),
-                "smart_187_raw": float(s187),
-                "smart_188_raw": float(0.0),
-                "smart_194_raw": float(np.clip(temp, 18.0, 65.0)),
-                "smart_197_raw": float(s197),
-            })
+            records.append(
+                {
+                    "date": current_date,
+                    "serial_number": serial,
+                    "model": model,
+                    "capacity_bytes": capacity,
+                    "failure": is_failure_day,
+                    "smart_5_raw": float(s5),
+                    "smart_9_raw": float(base_hours + day * 24),
+                    "smart_187_raw": float(s187),
+                    "smart_188_raw": float(0.0),
+                    "smart_194_raw": float(np.clip(temp, 18.0, 65.0)),
+                    "smart_197_raw": float(s197),
+                }
+            )
 
     df = pl.DataFrame(records)
-    
+
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     df.write_parquet(output_path)
     print(f"Generated benchmark telemetry dataset: {len(df):,} rows saved to {output_path}")

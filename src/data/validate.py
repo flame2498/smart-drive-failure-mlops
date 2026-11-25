@@ -1,8 +1,9 @@
 """Data contract validation using Pandera."""
-import pandera.polars as pa
-import polars as pl
+
 from typing import Tuple
 
+import pandera.polars as pa
+import polars as pl
 
 RawTelemetrySchema = pa.DataFrameSchema(
     columns={

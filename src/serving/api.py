@@ -1,8 +1,9 @@
 """FastAPI production inference microservice with health checks and metrics."""
+
 import time
 from pathlib import Path
+
 import joblib
-import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, status
 from prometheus_client import Counter, Histogram, make_asgi_app
@@ -74,7 +75,9 @@ def _score_drive(input_data: DriveTelemetryInput, model, feature_cols) -> Predic
             + data_dict.get("smart_197_raw", 0.0)
         )
     if "wear_acceleration_rate" in feature_cols and row.get("wear_acceleration_rate", 0.0) == 0.0:
-        row["wear_acceleration_rate"] = data_dict.get("smart_5_raw_delta_7d", 0.0) / (data_dict.get("smart_9_raw", 0.0) + 1.0)
+        row["wear_acceleration_rate"] = data_dict.get("smart_5_raw_delta_7d", 0.0) / (
+            data_dict.get("smart_9_raw", 0.0) + 1.0
+        )
     if "composite_delta_spike_7d" in feature_cols and row.get("composite_delta_spike_7d", 0.0) == 0.0:
         row["composite_delta_spike_7d"] = (
             data_dict.get("smart_5_raw_delta_7d", 0.0)
@@ -83,7 +86,8 @@ def _score_drive(input_data: DriveTelemetryInput, model, feature_cols) -> Predic
         )
     if "temperature_instability" in feature_cols and row.get("temperature_instability", 0.0) == 0.0:
         row["temperature_instability"] = abs(
-            data_dict.get("smart_194_raw", 0.0) - data_dict.get("smart_194_raw_mean_7d", data_dict.get("smart_194_raw", 0.0))
+            data_dict.get("smart_194_raw", 0.0)
+            - data_dict.get("smart_194_raw_mean_7d", data_dict.get("smart_194_raw", 0.0))
         )
 
     df_row = pd.DataFrame([row])
