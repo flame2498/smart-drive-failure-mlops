@@ -51,6 +51,18 @@ metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
 
 
+@app.get("/", status_code=status.HTTP_200_OK)
+def root():
+    return {
+        "service": "Cloud Hard Drive Failure Prediction Microservice",
+        "status": "online",
+        "version": "1.0.0",
+        "documentation": "/docs",
+        "health_check": "/health",
+        "metrics": "/metrics",
+    }
+
+
 @app.get("/health", status_code=status.HTTP_200_OK)
 def health_check():
     bundle = get_model_bundle()
