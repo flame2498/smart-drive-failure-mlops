@@ -30,15 +30,18 @@ venv/
 env/
 ENV/
 
-# Data & Models (tracked via DVC / Cloud Storage)
-data/raw/*
-!data/raw/.gitkeep
+# Data & Models (Large raw archives ignored)
+data/raw/*.zip
+data/raw/telemetry_sample.parquet
 data/processed/*
 !data/processed/.gitkeep
-data/reference/*
-!data/reference/.gitkeep
-models/*
-!models/.gitkeep
+
+# Whitelist production model, reference baseline, and fleet dataset for cloud serving
+!data/raw/backblaze_telemetry.parquet
+!data/reference/reference_features.parquet
+!models/lgb_model.joblib
+!models/metrics.json
+!reports/drift_metrics.json
 
 # MLflow tracking
 mlruns/
@@ -46,8 +49,7 @@ mlflow.db
 
 # Logs & Monitoring reports
 logs/
-reports/
-*.html
+reports/*.html
 
 # IDE / System
 .DS_Store

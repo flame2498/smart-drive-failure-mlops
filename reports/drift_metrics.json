@@ -1,0 +1,121 @@
+{
+  "drift_detected": false,
+  "number_of_columns": 19,
+  "columns_drifted": [],
+  "metrics_by_column": {
+    "smart_5_raw": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_9_raw": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_187_raw": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_188_raw": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_194_raw": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_197_raw": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_5_raw_mean_7d": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_5_raw_delta_7d": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_187_raw_mean_7d": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_187_raw_delta_7d": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_197_raw_mean_7d": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_197_raw_delta_7d": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_194_raw_mean_7d": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "smart_194_raw_delta_7d": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "wear_rate_per_hour": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "wear_acceleration_rate": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "composite_critical_errors": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "composite_delta_spike_7d": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    },
+    "temperature_instability": {
+      "ks_statistic": 0.0,
+      "ks_pvalue": 1.0,
+      "psi": 0.0,
+      "drift_detected": false
+    }
+  }
+}
